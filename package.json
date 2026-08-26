@@ -8,10 +8,11 @@
     "llm-flow-mcp": "./dist/server.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run bundle",
+    "bundle": "node build.mjs",
     "dev": "tsc --watch",
-    "start:mcp": "node dist/server.js",
-    "start:cli": "node dist/cli.js"
+    "start:mcp": "node bundle/server.cjs",
+    "start:cli": "node bundle/cli.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -22,11 +23,21 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
+    "esbuild": "^0.28.2",
     "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["mcp", "flowchart", "llm", "claude", "codex", "cursor", "diagram", "code-documentation"],
+  "keywords": [
+    "mcp",
+    "flowchart",
+    "llm",
+    "claude",
+    "codex",
+    "cursor",
+    "diagram",
+    "code-documentation"
+  ],
   "license": "MIT"
 }

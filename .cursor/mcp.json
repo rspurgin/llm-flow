@@ -2,7 +2,7 @@
   "mcpServers": {
     "llm-flow": {
       "command": "node",
-      "args": ["./dist/server.js"]
+      "args": ["./bundle/server.cjs"]
     }
   }
 }
