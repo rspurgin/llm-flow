@@ -36,12 +36,21 @@ server.tool(
       .boolean()
       .default(false)
       .describe("Open the rendered file in the system default viewer after saving"),
+    links: z
+      .record(z.string())
+      .optional()
+      .describe(
+        "Optional map of Mermaid node ID → URL for clickable drill-down nodes (HTML format only). " +
+          "Node IDs are the identifiers used in the flowchart source, e.g. { \"fetchTrainers\": \"./detail.html\" }. " +
+          "Linked nodes are highlighted with a blue outline and open the URL in a new tab on click."
+      ),
   },
-  async ({ mermaid, format, title, output_path, open }) => {
+  async ({ mermaid, format, title, output_path, open, links }) => {
     const result = await renderFlowchart(mermaid, {
       format: format as OutputFormat,
       title,
       outputPath: output_path,
+      links,
     });
 
     if (open) openFile(result.outputPath);

@@ -19737,7 +19737,7 @@ var import_node_fs3 = __toESM(require("node:fs"), 1);
 var import_node_path = __toESM(require("node:path"), 1);
 var import_node_child_process = require("node:child_process");
 var import_node_os = __toESM(require("node:os"), 1);
-var HTML_TEMPLATE = (title, mermaid) => `<!DOCTYPE html>
+var HTML_TEMPLATE = (title, mermaid, links = {}) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -19841,7 +19841,51 @@ ${escapeMermaid(mermaid)}
     <pre id="mermaid-source">${escapeHtml(mermaid)}</pre>
   </main>
   <script>
-    mermaid.initialize({ startOnLoad: true, theme: 'dark', flowchart: { curve: 'basis' } });
+    mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose', flowchart: { curve: 'basis' } });
+
+    const __drilldown = ${JSON.stringify(links)};
+
+    function findNodeEl(svg, nodeId) {
+      let el = svg.querySelector('g[data-id="' + nodeId + '"]');
+      if (el) return el;
+      el = svg.querySelector('[id^="flowchart-' + nodeId + '-"]');
+      if (el) return el;
+      el = svg.querySelector('[id*="-' + nodeId + '"]');
+      if (el) return el;
+      const gEls = Array.from(svg.querySelectorAll('g'));
+      return gEls.find(g => {
+        if (!g.classList.contains('node')) return false;
+        const label = g.querySelector('.label');
+        return label && label.textContent.trim().includes(nodeId);
+      }) || null;
+    }
+
+    function makeNodeClickable(el, url) {
+      el.style.cursor = 'pointer';
+      el.style.pointerEvents = 'all';
+      el.querySelectorAll('rect, polygon, circle, ellipse, path').forEach(s => {
+        s.style.stroke = '#60a5fa';
+        s.style.strokeWidth = '2.5px';
+        s.style.filter = 'drop-shadow(0 0 6px rgba(96,165,250,0.4))';
+        s.style.pointerEvents = 'all';
+        s.style.cursor = 'pointer';
+      });
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      t.textContent = '\u{1F517} Click to drill down';
+      el.prepend(t);
+      el.addEventListener('click', (e) => { e.stopPropagation(); window.open(url, '_blank'); });
+    }
+
+    mermaid.run().then(() => {
+      setTimeout(() => {
+        const svg = document.querySelector('#diagram svg');
+        if (!svg) return;
+        for (const [nodeId, url] of Object.entries(__drilldown)) {
+          const el = findNodeEl(svg, nodeId);
+          if (el) makeNodeClickable(el, url);
+        }
+      }, 100);
+    });
 
     function toggleSource() {
       const src = document.getElementById('mermaid-source');
@@ -19869,14 +19913,14 @@ function resolveOutputPath(format, outputPath, title) {
   return import_node_path.default.join(import_node_os.default.tmpdir(), `${base}-${Date.now()}.${ext}`);
 }
 async function renderFlowchart(mermaid, options) {
-  const { format, title = "Flowchart" } = options;
+  const { format, title = "Flowchart", links = {} } = options;
   const outputPath = resolveOutputPath(format, options.outputPath, title);
   if (format === "mermaid") {
     import_node_fs3.default.writeFileSync(outputPath, mermaid, "utf8");
     return { outputPath, format };
   }
   if (format === "html") {
-    const html = HTML_TEMPLATE(title, mermaid);
+    const html = HTML_TEMPLATE(title, mermaid, links);
     import_node_fs3.default.writeFileSync(outputPath, html, "utf8");
     return { outputPath, format };
   }
@@ -19890,7 +19934,7 @@ async function renderFlowchart(mermaid, options) {
     return { outputPath, format };
   } catch {
     const htmlPath = outputPath.replace(/\.(png|svg)$/, ".html");
-    const html = HTML_TEMPLATE(title, mermaid);
+    const html = HTML_TEMPLATE(title, mermaid, links);
     import_node_fs3.default.writeFileSync(htmlPath, html, "utf8");
     return { outputPath: htmlPath, format: "html" };
   } finally {

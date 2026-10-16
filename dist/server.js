@@ -31,11 +31,18 @@ server.tool("render_flowchart", "Render a Mermaid flowchart to HTML, SVG, PNG, o
         .boolean()
         .default(false)
         .describe("Open the rendered file in the system default viewer after saving"),
-}, async ({ mermaid, format, title, output_path, open }) => {
+    links: z
+        .record(z.string())
+        .optional()
+        .describe("Optional map of Mermaid node ID → URL for clickable drill-down nodes (HTML format only). " +
+        "Node IDs are the identifiers used in the flowchart source, e.g. { \"fetchTrainers\": \"./detail.html\" }. " +
+        "Linked nodes are highlighted with a blue outline and open the URL in a new tab on click."),
+}, async ({ mermaid, format, title, output_path, open, links }) => {
     const result = await renderFlowchart(mermaid, {
         format: format,
         title,
         outputPath: output_path,
+        links,
     });
     if (open)
         openFile(result.outputPath);
